@@ -10,7 +10,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     message = f"""
-👋 Привет, {user.first_name} {user.last_name}!
+👋 Привет, {user.first_name} {user.last_name}! Рад тебя видеть снова!
 
 Я — бот для расписания университета.
 Сейчас я учусь, но скоро научусь показывать расписание!
