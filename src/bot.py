@@ -1,27 +1,20 @@
-import os
 
-from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler
 
+from .config import Config 
 from .handlers import BotHandlers
+
 
 def main():
     """Основная функция запуска бота"""
     print("🚀 Запускаю бота-приветствие...")
 
-    # Загружаем переменные окружения
-    load_dotenv()
-    bot_token = os.getenv("BOT_TOKEN")
-
-    if not bot_token:
-        print("❌ Ошибка: BOT_TOKEN не найден в .env файле")
-        print("Создайте файл .env с содержимым:")
-        print("BOT_TOKEN=ваш_токен_от_botfather")
-        exit(1)
+    # Конфигурация бота
+    config = Config()
 
     # Создаем приложение бота
-    app = Application.builder().token(bot_token).build()
+    app = Application.builder().token(config.BOT_TOKEN).build()
 
     # Инициализация обработчиков
     handlers = BotHandlers()
