@@ -105,11 +105,48 @@ poetry run task qa
 
 ```
 project/
-├── src/                    # Исходный код приложения
+├── src/
+│   ├── api_client.py      # Клиент для API расписания УрФУ
+│   ├── config.py          # Конфигурация и логирование
+│   └── types.py           # Типы данных
 ├── tests/                  # Тесты
+├── docs/                   # Документация Sphinx
 ├── pyproject.toml         # Конфигурация Poetry и taskipy
 ├── poetry.lock            # Фиксированные версии зависимостей
 └── README.md
+```
+
+### 🔌 API Клиент
+
+Клиент для работы с API расписания УрФУ.
+
+```python
+from src.api_client import UrfuAPIClient
+
+client = UrfuAPIClient()
+
+# Поиск групп
+groups = client.search_groups("МЕН-333009")
+for group in groups:
+    print(f"{group.title} (ID: {group.id})")
+
+# Получение расписания
+schedule = client.get_group_schedule(group_id=63725)
+for day in schedule.days:
+    print(f"{day.weekday} {day.date}")
+    for lesson in day.lessons:
+        print(f"  {lesson.timeBegin} {lesson.title}")
+
+client.close()
+```
+
+### 📚 Документация
+
+Документация генерируется с помощью Sphinx.
+
+```bash
+# Сборка документации
+poetry run sphinx-build -b html docs/source docs/_build
 ```
 
 ### Рабочий процесс разработки

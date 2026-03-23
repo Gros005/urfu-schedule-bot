@@ -24,15 +24,13 @@ logger.add(
 load_dotenv()
 
 class Config:
-    # Токен бота из переменных окружения
     BOT_TOKEN = os.getenv("BOT_TOKEN")
-    VK_TOKEN = os.getenv("VK_TOKEN")
 
-
-    if not BOT_TOKEN:
-        logger.warning("❌ Ошибка: BOT_TOKEN не найден в .env файле")
-        logger.warning("Создайте файл .env с содержимым:")
-        logger.warning("BOT_TOKEN=ваш токен от botfather")
-        exit(1)
+    def __init__(self):
+        if not self.BOT_TOKEN:
+            raise ValueError(
+                "BOT_TOKEN не найден. Создайте файл .env с содержимым:\n"
+                "BOT_TOKEN=ваш_токен_от_botfather"
+            )
 
     
