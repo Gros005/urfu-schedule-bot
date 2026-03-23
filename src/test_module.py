@@ -89,7 +89,7 @@ def print_schedule(data: dict):
             print(f"   📝 {event['comment']}")
 
 
-def main():
+def main1():
         # ID группы из вашего примера
     GROUP_ID = 63725
     
@@ -107,6 +107,5 @@ def main():
         print_schedule(schedule_data)
 
 
-# Примеры использования
-if __name__ == "__main__":
-    main()
+def main():
+    print('API UrFU')

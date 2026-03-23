@@ -32,8 +32,8 @@ taskipy = "1.14.1"
 [tool.poetry.scripts]
 bot = "src.bot:main"
 bot_vk = "src.botvk:main"
-bot_gigachat="src.botgigachat:main"
 test_module = "src.test_module:main"
+api = "src.api_client:main"
 
 [tool.taskipy.tasks]
 # Тестирование
