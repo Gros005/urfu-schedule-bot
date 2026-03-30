@@ -1,0 +1,3 @@
+cd PATH_PROJECT
+venv\Scripts\activate.bat
+python -m src.bot

@@ -1,7 +1,8 @@
 from typing import Optional, List
+from collections import defaultdict
+from datetime import datetime, timedelta
 
 import httpx
-from datetime import datetime, timedelta
 
 from .config import logger
 from .types import Group, Lesson, DaySchedule, WeekSchedule
@@ -81,10 +82,10 @@ class UrfuAPIClient:
         return groups
 
     def get_group_schedule(
-        self,
-        group_id: int,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+            self,
+            group_id: int,
+            date_from: Optional[datetime] = None,
+            date_to: Optional[datetime] = None,
     ) -> WeekSchedule:
         """
         Получает расписание группы.
@@ -119,16 +120,26 @@ class UrfuAPIClient:
 
         Returns:
             Расписание на неделю.
-
-        Задание:
-            Реализуйте этот метод самостоятельно.
-            1. Извлеките список событий из data["events"]
-            2. Сгруппируйте события по дате
-            3. Для каждого события вызовите _parse_event
-            4. Отсортируйте дни и уроки по времени
-            5. Верните объект WeekSchedule
         """
-        raise NotImplementedError("Реализуйте этот метод самостоятельно")
+        # Группируем события по дате
+        events_by_date = defaultdict(list)
+        for event in data["events"]:
+            lesson = self._parse_event(event)
+            events_by_date[event["date"]].append(lesson)
+
+        # Создаем дни
+        days = []
+        for date, lessons in sorted(events_by_date.items()):
+            # Сортируем уроки по времени
+            lessons.sort(key=lambda x: x.timeBegin)
+
+            days.append(DaySchedule(
+                date=date,
+                weekday=self._get_weekday(date),
+                lessons=lessons
+            ))
+
+        return WeekSchedule(days=days)
 
     def _parse_event(self, event: dict) -> Lesson:
         """
@@ -139,9 +150,31 @@ class UrfuAPIClient:
 
         Returns:
             Объект урока.
-
-        Задание:
-            Реализуйте этот метод самостоятельно.
-            Создайте объект Lesson со всеми полями из event.
         """
-        raise NotImplementedError("Реализуйте этот метод самостоятельно")
+        return Lesson(
+            title=event.get("title", ""),
+            loadType=event.get("loadType", ""),
+            date=event.get("date", ""),
+            timeBegin=event.get("timeBegin", ""),
+            timeEnd=event.get("timeEnd", ""),
+            pairNumber=event.get("pairNumber", 0),
+            auditoryTitle=event.get("auditoryTitle"),
+            auditoryLocation=event.get("auditoryLocation"),
+            teacherName=event.get("teacherName"),
+            comment=event.get("comment"),
+        )
+
+    def _get_weekday(self, date_str: str) -> str:
+        """
+        Возвращает название дня недели по дате.
+
+        Args:
+            date_str: Дата в формате YYYY-MM-DD
+
+        Returns:
+            Название дня недели.
+        """
+        weekdays = ["понедельник", "вторник", "среда", "четверг",
+                    "пятница", "суббота", "воскресенье"]
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        return weekdays[dt.weekday()]
