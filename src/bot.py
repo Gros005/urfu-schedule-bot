@@ -1,22 +1,20 @@
 import sys
 from telegram.ext import Application, CommandHandler
-
 from .config import Config, logger
 from .handlers import BotHandlers
 from .console_handler import ConsoleHandler
 
 
 def main():
-    """Основная функция запуска бота"""
-    logger.info("🚀 Запускаю бота...")
 
-    # Конфигурация бота
+    """
+    Основная функция запуска бота
+    """
+
+    logger.info("Запускаю бота...")
+
     config = Config()
-
-    # Создаем приложение бота
     app = Application.builder().token(config.BOT_TOKEN).build()
-
-    # Инициализация обработчиков
     handlers = BotHandlers()
 
     # Регистрируем обработчики команд
@@ -29,21 +27,24 @@ def main():
     app.add_handler(CommandHandler("cleargroup", handlers.cleargroup_command))
     app.add_handler(CommandHandler("days", handlers.days_command))
     app.add_handler(CommandHandler("groups", handlers.groups_command))
+    app.add_handler(CommandHandler("today", handlers.today_command))
+    app.add_handler(CommandHandler("tomorrow", handlers.tomorrow_command))
+    app.add_handler(CommandHandler("export", handlers.export_command))
 
     # Запускаем консольный обработчик (для управления из консоли)
     console = ConsoleHandler(app)
     console.start()
 
     # Запускаем бота
-    logger.info("✅ Бот запущен!")
-    logger.info("ℹ️  Для остановки введите 'stop' в консоли или нажмите Ctrl+C")
-    logger.info("📋 Доступные команды в Telegram: /start, /help, /about, /schedule, /setgroup, /mygroup, /cleargroup, /days")
+    logger.info(" Бот запущен!")
+    logger.info(" Для остановки введите 'stop' в консоли или нажмите Ctrl+C")
+    logger.info(" Доступные команды в Telegram: /start, /help, /about, /schedule, /setgroup, /mygroup, /cleargroup, /days")
 
     try:
         # Запускаем polling (бесконечный цикл получения обновлений)
         app.run_polling()
     except KeyboardInterrupt:
-        logger.info("🛑 Получен сигнал остановки (Ctrl+C)")
+        logger.info(" Получен сигнал остановки (Ctrl+C)")
         sys.exit(0)
     except Exception as e:
         logger.error(f"Ошибка при работе бота: {e}")
