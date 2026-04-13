@@ -1,147 +1,126 @@
 from typing import List
 from ..types import WeekSchedule, Lesson, Group
+from .grammar import plural_form, format_days_message
 
 
 def format_schedule_message(schedule: WeekSchedule,
                             group_title: str = None,
                             days_ahead: int = 7) -> str:
     """
-    Форматирует расписание в красивое сообщение для Telegram.
-
-    Args:
-        schedule: Объект WeekSchedule с расписанием
-        group_title: Название группы (опционально)
-        days_ahead: Количество дней в расписании
-
-    Returns:
-        Отформатированное сообщение в Markdown
+    Форматирует расписание в красивое сообщение для Telegram
     """
     if not schedule.days:
-        return "📭 На ближайшие дни занятий нет"
+        return " На ближайшие дни занятий нет"
 
-    # Заголовок
-    message = "📚 *РАСПИСАНИЕ*\n"
+    message = " *РАСПИСАНИЕ*\n"
     if group_title:
-        message += f"🎓 *Группа:* {group_title}\n"
-    message += f"📅 *Период:* {days_ahead} дней\n"
+        message += f" *Группа:* {group_title}\n"
+
+    days_word = format_days_message(days_ahead)
+    message += f" *Период:* {days_ahead} {days_word}\n"
     message += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
 
     day_count = 0
 
     for day in schedule.days:
-        if not day.lessons:
-            continue
+        if not day.lessons: continue
 
         day_count += 1
-        # Заголовок дня
         weekday_ru = _translate_weekday(day.weekday)
         date_short = day.date[5:].replace('-', '.')
-        message += f"*📌 {weekday_ru} ({date_short})*\n"
+        message += f"* {weekday_ru} ({date_short})*\n"
         message += "────────────────────────────────────\n"
 
-        for lesson in day.lessons:
-            message += _format_lesson(lesson)
-
+        for lesson in day.lessons: message += _format_lesson(lesson)
         message += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
 
-    if day_count == 0:
-        return "📭 На ближайшие дни занятий нет"
+    if day_count == 0: return " На ближайшие дни занятий нет"
 
     return message
 
 
 def _format_lesson(lesson: Lesson) -> str:
-    """Форматирует одно занятие."""
+    """
+    Форматирует одно занятие
+    """
     # Время
     time_start = lesson.timeBegin[:5] if lesson.timeBegin else "??:??"
     time_end = lesson.timeEnd[:5] if lesson.timeEnd else "??:??"
     pair_info = f"[{lesson.pairNumber} пара]" if lesson.pairNumber > 0 else ""
 
-    message = f"🕐 *{time_start}*–{time_end} {pair_info}\n"
-    message += f"📖 {lesson.title}\n"
-    message += f"📚 *Тип:* {lesson.loadType}\n"
+    message = f" *{time_start}*–{time_end} {pair_info}\n"
+    message += f" {lesson.title}\n"
+    message += f" *Тип:* {lesson.loadType}\n"
 
     # Преподаватель
     if lesson.teacherName:
-        message += f"👨‍🏫 *Преподаватель:* {lesson.teacherName}\n"
+        message += f" *Преподаватель:* {lesson.teacherName}\n"
 
     # Аудитория
     if lesson.auditoryTitle:
-        message += f"🏛 *Аудитория:* {lesson.auditoryTitle}\n"
+        message += f" *Аудитория:* {lesson.auditoryTitle}\n"
         if lesson.auditoryLocation:
             # Сокращаем длинное название локации
             location = lesson.auditoryLocation[:60] + "..." if len(
                 lesson.auditoryLocation) > 60 else lesson.auditoryLocation
-            message += f"📍 {location}\n"
+            message += f" {location}\n"
 
     # Комментарий или ссылка
     if lesson.comment:
         if lesson.comment.startswith('http'):
-            message += f"🔗 [Ссылка на занятие]({lesson.comment})\n"
+            message += f" [Ссылка на занятие]({lesson.comment})\n"
         else:
             comment = lesson.comment[:80] + "..." if len(lesson.comment) > 80 else lesson.comment
-            message += f"💬 {comment}\n"
+            message += f" {comment}\n"
 
     return message + "\n"
 
 
 def format_group_list_message(groups: List[Group], query: str) -> str:
     """
-    Форматирует список найденных групп.
-
-    Args:
-        groups: Список групп
-        query: Поисковый запрос
-
-    Returns:
-        Отформатированное сообщение
+    Форматирует список найденных групп
     """
-    if not groups:
-        return f"❌ По запросу '{query}' группы не найдены"
+    if not groups: return f" По запросу '{query}' группы не найдены"
 
-    message = f"🔍 *Результаты поиска групп:*\n"
-    message += f"📝 *Запрос:* '{query}'\n"
-    message += f"📊 *Найдено:* {len(groups)} групп\n\n"
+    group_word = plural_form(len(groups), ("группа", "группы", "групп"))
+
+    message = f" *Результаты поиска групп:*\n"
+    message += f" *Запрос:* '{query}'\n"
+    message += f" *Найдено:* {len(groups)} {group_word}\n\n"
 
     for i, group in enumerate(groups[:10], 1):
+        course_word = plural_form(group.course, ("курс", "курса", "курсов"))
         message += f"{i}. *{group.title}*\n"
-        message += f"   🆔 ID: `{group.id}`\n"
-        message += f"   📚 Курс: {group.course}\n\n"
+        message += f"    ID: `{group.id}`\n"
+        message += f"    {group.course} {course_word}\n\n"
 
     if len(groups) > 10:
-        message += f"*...и еще {len(groups) - 10} групп*\n\n"
+        message += f"*...и еще {len(groups) - 10} {plural_form(len(groups) - 10, ('группа', 'группы', 'групп'))}*\n\n"
 
     message += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    message += "💡 *Как выбрать группу:*\n"
-    message += "Отправьте `/setgroup ID`\n"
-    message += f"Например: `/setgroup {groups[0].id if groups else 63725}`\n\n"
-    message += "Или повторите поиск с более точным названием"
+    message += " *Как выбрать группу:*\n"
+    message += "• По названию: `/setgroup МЕН-333009`\n"
+    message += "• По ID: `/setgroup 63725`\n\n"
 
     return message
 
 
 def format_mygroup_message(group_title: str, group_id: int, course: int, days_ahead: int) -> str:
     """
-    Форматирует сообщение с информацией о текущей группе.
-
-    Args:
-        group_title: Название группы
-        group_id: ID группы
-        course: Номер курса
-        days_ahead: Текущая настройка количества дней
-
-    Returns:
-        Отформатированное сообщение
+    Форматирует сообщение с информацией о текущей группе
     """
+    course_word = plural_form(course, ("курс", "курса", "курсов"))
+    days_word = format_days_message(days_ahead)
+
     message = f"""
-ℹ️ *Ваша текущая группа*
+ *Ваша текущая группа*
 
-🎓 *Название:* {group_title}
-🆔 *ID:* `{group_id}`
-📚 *Курс:* {course}
+ *Название:* {group_title}
+ *ID:* `{group_id}`
+ *Курс:* {course} *курс *
 
-📊 *Настройки:*
-📅 *Дней для расписания:* {days_ahead}
+ *Настройки:*
+ *Дней для расписания:* {days_ahead} {days_word}
 
 💡 *Команды:*
 /schedule - показать расписание
@@ -151,61 +130,59 @@ def format_mygroup_message(group_title: str, group_id: int, course: int, days_ah
     return message
 
 
+def format_days_settings_message(current_days: int) -> str:
+    """
+    Форматирует сообщение о настройке количества дней
+    """
+    days_word = format_days_message(current_days)
+    return f"""
+ *Текущее количество дней:* {current_days} {days_word}
+
+Используйте /days <число> для изменения
+Пример: /days 14
+Доступный диапазон: 1-30 дней
+"""
+
+
+def format_days_changed_message(days: int) -> str:
+    """
+    Форматирует сообщение об успешном изменении количества дней
+    """
+    days_word = format_days_message(days)
+    return f"""
+ *Количество дней изменено!*
+
+ Теперь расписание показывается на {days} {days_word}
+
+Используйте /schedule для просмотра
+"""
+
+
 def _translate_weekday(weekday: str) -> str:
     """
-    Переводит название дня недели на русский с заглавной буквы.
-
-    Args:
-        weekday: Название дня на русском (может быть с маленькой буквы)
-
-    Returns:
-        День недели с заглавной буквы
+    Переводит название дня недели на русский с заглавной буквы
     """
     return weekday.capitalize()
 
 
 def format_error_message(error: str) -> str:
     """
-    Форматирует сообщение об ошибке.
-
-    Args:
-        error: Текст ошибки
-
-    Returns:
-        Отформатированное сообщение об ошибке
+    Форматирует сообщение об ошибке
     """
-    return f"❌ *Ошибка:* {error}\n\nПопробуйте позже или обратитесь к администратору."
+    return f" *Ошибка:* {error}\n\nПопробуйте позже или обратитесь к администратору."
 
 
-def format_preset_groups_message() -> str:
+def format_group_saved_message(group_title: str, group_id: int, course: int) -> str:
     """
-    Форматирует список предустановленных групп для вывода в Telegram.
-
-    Returns:
-        Отформатированное сообщение со списком групп
+    Форматирует сообщение об успешном сохранении группы
     """
-    from ..data.preset_groups import get_preset_groups
+    course_word = plural_form(course, ("курс", "курса", "курсов"))
+    return f"""
+ *Группа сохранена!*
 
-    groups = get_preset_groups()
+ {group_title}
+ {course} {course_word}
+ ID: `{group_id}`
 
-    message = "📚 *Доступные группы УрФУ*\n\n"
-
-    # Группируем по префиксу
-    men_333 = [g for g in groups if g["title"].startswith("МЕН-333")]
-    men_330 = [g for g in groups if g["title"].startswith("МЕН-330")]
-
-    message += "*МЕН-333:*\n"
-    for group in men_333:
-        message += f"  • `{group['title']}` (ID: {group['id']})\n"
-
-    message += "\n*МЕН-330:*\n"
-    for group in men_330:
-        message += f"  • `{group['title']}` (ID: {group['id']})\n"
-
-    message += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    message += "💡 *Как выбрать группу:*\n"
-    message += "Отправьте `/setgroup МЕН-333009`\n"
-    message += "Или `/setgroup 63725`\n\n"
-    message += "📌 *Совет:* Используйте `/search` для поиска других групп"
-
-    return message
+Теперь используйте /schedule для просмотра расписания
+"""
